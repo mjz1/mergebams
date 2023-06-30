@@ -31,7 +31,7 @@ process MERGEBAMS {
 
     input: 
         // tuple val(sampleid), path(bams) val(labels)
-        tuple val(sampleid), path(bams), val(labels), path(barcodes)
+        tuple val(sampleid), path(bams, stageAs: "?/*"), val(labels), path(barcodes, stageAs: "?/*")
     
     output:
         path(sampleid)

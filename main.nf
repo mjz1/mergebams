@@ -29,6 +29,8 @@ process MERGEBAMS {
     label 'multicore'
     publishDir path: params.outdir, mode:'copyNoFollow'
     cache 'lenient'
+    cpus 1
+    memory '32 GB'
 
     tag "Sample: $sampleid"
 
@@ -37,7 +39,7 @@ process MERGEBAMS {
         tuple val(sampleid), path(bams, stageAs: "?/*"), val(labels), path(barcodes, stageAs: "?/*")
     
     output:
-        path("${sampleid}/*")
+        tuple val(sampleid), path("${sampleid}/out_bam.bam"), path("${sampleid}/fail_bam.bam"), path("${sampleid}/out_barcodes.tsv.gz")
 
     script:
     """
@@ -54,6 +56,61 @@ process MERGEBAMS {
     barcodes_in=\$(echo "${barcodes}" | tr ' ' ',')
 
     mergebams -i \${bam_in} -l ${labels} -b \${barcodes_in} -o \$outdir -t $task.cpus
+    """
+}
+
+process SAMTOOLS_SORT_INDEX {
+    tag "$meta.id"
+    label 'process_medium'
+    publishDir path: params.outdir, mode:'copyNoFollow'
+
+    conda "bioconda::samtools=1.17"
+    container "quay.io/biocontainers/samtools:1.17--hd87286a_1"
+
+    input:
+    tuple val(meta), path(bam)
+
+    output:
+    tuple val(meta), path("${meta.id}/*.bam*"), emit: bam
+    path  "versions.yml"          , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    if ("$bam" == "${prefix}.bam") error "Input and output names are the same, use \"task.ext.prefix\" to disambiguate!"
+    """
+    outdir=${prefix}
+    mkdir -p \$outdir
+    samtools sort \\
+        $args \\
+        -@ $task.cpus \\
+        -o \$outdir/${prefix}.bam \\
+        -T $prefix \\
+        $bam
+
+    samtools index \\
+        $args \\
+        -@ $task.cpus \\
+        \$outdir/${prefix}.bam
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.bam
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
     """
 }
 
@@ -74,6 +131,12 @@ workflow {
             groupTuple(by: [0]).
             map(row -> tuple row[0], row[1], row[2].join(","), row[3])
 
-    MERGEBAMS(input_ch)
+    sam_inch = MERGEBAMS(input_ch).map {
+        sample_id, bam, fbam, bc ->
+            tuple([id: sample_id, single_end:false], bam)
+    }
+
+    SAMTOOLS_SORT_INDEX(sam_inch)
+
 }
 

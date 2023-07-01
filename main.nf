@@ -29,6 +29,8 @@ process MERGEBAMS {
     label 'multicore'
     publishDir path: params.outdir, mode:'copyNoFollow'
 
+    tag "Sample: $sampleid"
+
     input: 
         // tuple val(sampleid), path(bams) val(labels)
         tuple val(sampleid), path(bams, stageAs: "?/*"), val(labels), path(barcodes, stageAs: "?/*")

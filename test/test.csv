@@ -1,0 +1,5 @@
+sample_id,bam,barcodes,label
+sample1,/Users/mzatzman/repos/mergebams/test/bam1.bam,/Users/mzatzman/repos/mergebams/test/barcodes1.tsv.gz,bam1_
+sample1,/Users/mzatzman/repos/mergebams/test/bam2.bam,/Users/mzatzman/repos/mergebams/test/barcodes2.tsv.gz,bam2_
+sample2,/Users/mzatzman/repos/mergebams/test/bam3.bam,/Users/mzatzman/repos/mergebams/test/barcodes3.tsv.gz,bam3_
+sample2,/Users/mzatzman/repos/mergebams/test/bam4.bam,/Users/mzatzman/repos/mergebams/test/barcodes4.tsv.gz,bam4_

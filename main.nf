@@ -27,14 +27,14 @@ log.info """\
 
 process MERGEBAMS {
     label 'multicore'
-    publishDir path: params.outdir, mode:'copy'
+    publishDir path: params.outdir, mode:'copyNoFollow'
 
     input: 
         // tuple val(sampleid), path(bams) val(labels)
         tuple val(sampleid), path(bams, stageAs: "?/*"), val(labels), path(barcodes, stageAs: "?/*")
     
     output:
-        path(sampleid)
+        path("${sampleid}/*")
 
     script:
     """
@@ -63,7 +63,7 @@ workflow {
     } else {
         input_ch = Channel.fromList(params.samples).
             merge(Channel.fromList(params.bams)).
-            merge(Channel.fromList(params.labels).map{element -> element + "_"}).
+            merge(Channel.fromList(params.labels)).
             merge(Channel.fromList(params.barcodes))
     }
 

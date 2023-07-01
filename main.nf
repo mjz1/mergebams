@@ -28,6 +28,7 @@ log.info """\
 process MERGEBAMS {
     label 'multicore'
     publishDir path: params.outdir, mode:'copyNoFollow'
+    cache 'lenient'
 
     tag "Sample: $sampleid"
 

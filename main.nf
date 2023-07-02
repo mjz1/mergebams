@@ -27,7 +27,7 @@ log.info """\
 
 process MERGEBAMS {
     label 'multicore'
-    publishDir path: params.outdir, mode:'copyNoFollow'
+    publishDir path: params.outdir, mode:'copyNoFollow', overwrite: true
     cache 'lenient'
     cpus 1
     memory '32 GB'
@@ -62,7 +62,7 @@ process MERGEBAMS {
 process SAMTOOLS_SORT_INDEX {
     tag "$meta.id"
     label 'process_medium'
-    publishDir path: params.outdir, mode:'copyNoFollow'
+    publishDir path: params.outdir, mode:'copyNoFollow', overwrite: true
 
     conda "bioconda::samtools=1.17"
     container "quay.io/biocontainers/samtools:1.17--hd87286a_1"
